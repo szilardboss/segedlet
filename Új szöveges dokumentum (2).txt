@@ -1,0 +1,3630 @@
+CISCO/HÁLÓZAT 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+ALAPOK / BELÉPÉS / MÓDOK 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+enable                              → privileged EXEC módba lép 
+ 
+configure terminal                  → global config módba lép 
+ 
+exit                                → visszalép egy szinttel 
+ 
+end (vagy Ctrl+Z)                   → visszaugrik privileged EXEC-be 
+ 
+no <parancs>                        → parancs törlése/visszavonása 
+ 
+ 
+ 
+hostname <név>                      → eszköz neve 
+ 
+enable secret <jelszó>              → titkosított enable jelszó 
+ 
+service password-encryption         → összes jelszó titkosítása 
+ 
+ 
+ 
+line console 0                      → konzol vonal konfigja 
+ 
+password <jelszó> 
+ 
+login 
+ 
+line vty 0 4                        → Telnet/SSH vonalak konfigja 
+ 
+password <jelszó> 
+ 
+login 
+ 
+transport input ssh                → csak SSH engedélyezése 
+ 
+ 
+ 
+banner motd # <szöveg> #            → bejelentkezési üzenet 
+ 
+ 
+ 
+write memory  (vagy copy run start) → konfiguráció mentése 
+ 
+show running-config                 → aktuális konfig megtekintése 
+ 
+show startup-config                 → mentett konfig megtekintése 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+INTERFÉSZEK (ROUTER) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+interface GigabitEthernet0/0        → interfész kiválasztása (röv: int g0/0) 
+ 
+interface FastEthernet0/0           → (röv: int f0/0) 
+ 
+ip address 192.168.1.1 255.255.255.0   → IP cím beállítása 
+ 
+no shutdown                            → interfész bekapcsolása 
+ 
+shutdown                               → interfész kikapcsolása 
+ 
+description <szöveg>                   → leírás hozzáadása 
+ 
+duplex full                            → duplex beállítás 
+ 
+speed 100                              → sebesség beállítás 
+ 
+ 
+ 
+show interfaces                     → összes interfész státusza 
+ 
+show ip interface brief             → rövid összefoglaló IP-kkel 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+VLAN ROUTING - ROUTER ON A STICK 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+interface GigabitEthernet0/0.60     → alinterfész létrehozása VLAN 60-hoz 
+ 
+encapsulation dot1Q 60             → 802.1Q tokozás beállítása 
+ 
+ip address 172.16.60.1 255.255.255.0 
+ 
+asd1 
+ 
+1. FELADAT: RSTP + ROOT BRIDGE (S1 kapcsoló) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+Feladat: RSTP bekapcsolás, S1 legyen Root Bridge VLAN 1-en 
+ 
+         (legalacsonyabb prioritás) 
+ 
+ 
+ 
+MEGOLDÁS (TeraTerm / Cisco IOS): 
+ 
+ 
+ 
+  enable 
+ 
+  configure terminal 
+ 
+ 
+ 
+  ! RSTP mód beállítása: 
+ 
+  spanning-tree mode rapid-pvst 
+ 
+ 
+ 
+  ! Root Bridge beállítása VLAN 1-re (prioritás = 0 a legalacsonyabb): 
+ 
+  spanning-tree vlan 1 priority 0 
+ 
+ 
+ 
+  end 
+ 
+  write memory 
+ 
+ 
+ 
+ELLENŐRZÉS: 
+ 
+  show spanning-tree vlan 1 
+ 
+ 
+ 
+  → "This bridge is the root" sort kell látnod! 
+ 
+  → Bridge ID Priority: 1 (0 + 1 = VLAN ID hozzáadódik, szóval 1 lesz) 
+ 
+  → Mode: RSTP 
+ 
+ 
+ 
+MEGJEGYZÉS: 
+ 
+  ! Lehetséges prioritás értékek: 0, 4096, 8192, 16384... 
+ 
+  ! A 0 a legalacsonyabb = ez lesz a Root Bridge 
+ 
+  ! Alternatíva: spanning-tree vlan 1 root primary 
+ 
+    (ez automatikusan beállítja, de a priority 0 direktebb) 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+2. FELADAT: OSPF DINAMIKUS FORGALOMIRÁNYÍTÁS (R1 és R2) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+Feladat: OSPF Process ID 1, mindkét routeren, Area 0, 
+ 
+         közvetlenül csatlakozó hálózatok hirdetése 
+ 
+ 
+ 
+MEGOLDÁS - R1-en: 
+ 
+ 
+ 
+  enable 
+ 
+  configure terminal 
+ 
+ 
+ 
+  router ospf 1 
+ 
+   network <R1 hálózat1> <wildcard> area 0 
+ 
+   network <R1 hálózat2> <wildcard> area 0 
+ 
+   ! Minden közvetlenül csatlakozó hálózatot add hozzá! 
+ 
+ 
+ 
+  end 
+ 
+  write memory 
+ 
+ 
+ 
+MEGOLDÁS - R2-n (ugyanígy): 
+ 
+ 
+ 
+  enable 
+ 
+  configure terminal 
+ 
+ 
+ 
+  router ospf 1 
+ 
+   network <R2 hálózat1> <wildcard> area 0 
+ 
+   network <R2 hálózat2> <wildcard> area 0 
+ 
+ 
+ 
+  end 
+ 
+  write memory 
+ 
+ 
+ 
+PÉLDA ha pl. 192.168.50.0/24 és 10.0.0.0/30 hálózatok vannak: 
+ 
+ 
+ 
+  router ospf 1 
+ 
+   network 192.168.50.0 0.0.0.255 area 0 
+ 
+   network 10.0.0.0 0.0.0.3 area 0 
+ 
+ 
+ 
+WILDCARD GYORS: 
+ 
+  /24 → 0.0.0.255 
+ 
+  /30 → 0.0.0.3 
+ 
+  /16 → 0.0.255.255 
+ 
+ 
+ 
+ELLENŐRZÉS: 
+ 
+  show ip ospf neighbor          → szomszédok (FULL állapot kell!) 
+ 
+  show ip route ospf             → OSPF tanult útvonalak (O betűvel) 
+ 
+  show ip ospf                   → Process ID, Router ID 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+3. FELADAT: VLAN 50 LÉTREHOZÁSA (S1 kapcsoló) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+Feladat: VLAN 50 "Konyveles" névvel, F0/1 port access módban hozzárendelve 
+ 
+ 
+ 
+MEGOLDÁS: 
+ 
+ 
+ 
+  enable 
+ 
+  configure terminal 
+ 
+ 
+ 
+  ! VLAN létrehozása névvel: 
+ 
+  vlan 50 
+ 
+   name Konyveles 
+ 
+  exit 
+ 
+ 
+ 
+  ! Port hozzárendelése: 
+ 
+  interface FastEthernet0/1 
+ 
+   switchport mode access 
+ 
+   switchport access vlan 50 
+ 
+   no shutdown 
+ 
+  exit 
+ 
+ 
+ 
+  end 
+ 
+  write memory 
+ 
+ 
+ 
+ELLENŐRZÉS: 
+ 
+  show vlan brief 
+ 
+  → VLAN 50 "Konyveles" soránál az Fa0/1 port szerepel 
+ 
+ 
+ 
+  show interfaces FastEthernet0/1 switchport 
+ 
+  → Access Mode VLAN: 50 (Konyveles) 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+4. FELADAT: ACL 10 HOZZÁFÉRÉSI LISTA (R1) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+Feladat: Standard ACL 10, csak 192.168.50.10 engedélyezve, 
+ 
+         alkalmazás: VTY vonalak, bejövő (in) irány 
+ 
+ 
+ 
+MEGOLDÁS: 
+ 
+ 
+ 
+  enable 
+ 
+  configure terminal 
+ 
+ 
+ 
+  ! Standard ACL létrehozása: 
+ 
+  access-list 10 permit 192.168.50.10 
+ 
+  ! (az implicit deny any a végén automatikusan ott van) 
+ 
+ 
+ 
+  ! VTY vonalakra alkalmazás: 
+ 
+  line vty 0 4 
+ 
+   access-class 10 in 
+ 
+  exit 
+ 
+ 
+ 
+  end 
+ 
+  write memory 
+ 
+ 
+ 
+ELLENŐRZÉS: 
+ 
+  show access-lists 
+ 
+  → "Standard IP access list 10" 
+ 
+  →   10 permit 192.168.50.10 
+ 
+ 
+ 
+  show line vty 0 4 
+ 
+  → Inbound access list: 10 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+5. FELADAT: ENABLE SECRET JELSZÓ (R1) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+Feladat: Titkosított enable jelszó = vizsga01 
+ 
+ 
+ 
+MEGOLDÁS: 
+ 
+ 
+ 
+  enable 
+ 
+  configure terminal 
+ 
+ 
+ 
+  enable secret vizsga01 
+ 
+ 
+ 
+  end 
+ 
+  write memory 
+ 
+ 
+ 
+ELLENŐRZÉS: 
+ 
+  show running-config | include enable secret 
+ 
+  → "enable secret 5 $1$..." (titkosítva jelenik meg, ez helyes!) 
+ 
+ 
+ 
+  ! KÜLÖNBSÉG: 
+ 
+  ! enable password = NEM titkosított (látható plain textben) 
+ 
+  ! enable secret   = MD5 titkosított (ezt kell használni!) 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+no shutdown 
+ 
+ 
+ 
+interface GigabitEthernet0/0.70     → alinterfész VLAN 70-hez 
+ 
+encapsulation dot1Q 70 
+ 
+ip address 172.16.70.1 255.255.255.0 
+ 
+no shutdown 
+ 
+ 
+ 
+interface GigabitEthernet0/0.10     → alinterfész VLAN 10-hez 
+ 
+encapsulation dot1Q 10 
+ 
+ip address 192.168.10.1 255.255.255.0 
+ 
+no shutdown 
+ 
+ 
+ 
+interface GigabitEthernet0/0.20     → alinterfész VLAN 20-hez 
+ 
+encapsulation dot1Q 20 
+ 
+ip address 192.168.20.1 255.255.255.0 
+ 
+no shutdown 
+ 
+ 
+ 
+! FONTOS: az "anyát" (fizikai int) is be kell kapcsolni! 
+ 
+interface GigabitEthernet0/0 
+ 
+no shutdown 
+ 
+ 
+ 
+show interfaces GigabitEthernet0/0.60   → alinterfész ellenőrzése 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+VLAN-OK BEÁLLÍTÁSA (SWITCH) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+vlan 10                             → VLAN létrehozása 
+ 
+name IT                            → VLAN elnevezése 
+ 
+vlan 20 
+ 
+name HR 
+ 
+vlan 50 
+ 
+name Konyveles 
+ 
+vlan 60 
+ 
+vlan 70 
+ 
+ 
+ 
+! ACCESS portok beállítása 
+ 
+interface FastEthernet0/1 
+ 
+switchport mode access 
+ 
+switchport access vlan 10 
+ 
+no shutdown 
+ 
+ 
+ 
+! TÖBB PORT EGYSZERRE (interface range) 
+ 
+interface range FastEthernet0/10 - 15 
+ 
+switchport mode access 
+ 
+switchport access vlan 60 
+ 
+no shutdown 
+ 
+ 
+ 
+interface range FastEthernet0/1 - 24 
+ 
+switchport mode access 
+ 
+switchport access vlan 10 
+ 
+ 
+ 
+! TRUNK port beállítása (switch → router összeköttetés) 
+ 
+interface FastEthernet0/24 
+ 
+switchport mode trunk  
+ 
+ 
+ 
+switchport trunk allowed vlan all 
+ 
+no shutdown 
+ 
+ 
+ 
+show vlan brief                     → VLAN-ok és portok listája 
+ 
+show interfaces trunk               → trunk portok megtekintése 
+ 
+show vlan id 10                     → egy adott VLAN részletei 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+PORT SECURITY (SWITCH) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+interface FastEthernet0/1 
+ 
+switchport mode access              → előbb access módba kell tenni! 
+ 
+switchport port-security            → port security engedélyezése 
+ 
+switchport port-security maximum 2  → max 2 MAC cím 
+ 
+switchport port-security mac-address sticky   → dinamikus tanulás+mentés 
+ 
+switchport port-security violation restrict   → restrict mód (log+SNMP, nem kapcsol le) 
+ 
+switchport port-security violation shutdown   → shutdown mód (port lekapcsol) 
+ 
+switchport port-security violation protect    → protect mód (csak dob, nem logol) 
+ 
+ 
+ 
+! Lekapcsolt port visszaállítása: 
+ 
+interface FastEthernet0/1 
+ 
+shutdown 
+ 
+no shutdown 
+ 
+ 
+ 
+show port-security                  → összefoglaló 
+ 
+show port-security interface f0/1   → egy port részletei 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+STATIKUS ÚTVONALAK 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+! Alap statikus útvonal: 
+ 
+ip route 192.168.2.0 255.255.255.0 192.168.1.2 
+ 
+ 
+ 
+! Default route (alapértelmezett): 
+ 
+ip route 0.0.0.0 0.0.0.0 192.168.1.1 
+ 
+ 
+ 
+! Floating static route (tartalék, AD=50): 
+ 
+ip route 8.8.8.8 255.255.255.255 <next-hop> 50 
+ 
+ 
+ 
+! Loopback (null) route: 
+ 
+ip route 10.0.0.0 255.0.0.0 Null0 
+ 
+ 
+ 
+show ip route                       → routing tábla 
+ 
+show ip route static                → csak statikus útvonalak 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+OSPF DINAMIKUS FORGALOMIRÁNYÍTÁS 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+router ospf 1                       → OSPF process ID: 1 
+ 
+network 192.168.10.0 0.0.0.255 area 0   → hálózat hozzáadása area 0-hoz 
+ 
+network 192.168.20.0 0.0.0.255 area 0 
+ 
+network 10.0.0.0 0.0.0.3 area 0 
+ 
+passive-interface GigabitEthernet0/1    → ne küldjön OSPF Hello-t erre 
+ 
+ 
+ 
+! Router ID kézi beállítása (opcionális): 
+ 
+router ospf 1 
+ 
+router-id 1.1.1.1 
+ 
+ 
+ 
+show ip ospf                        → OSPF folyamat info 
+ 
+show ip ospf neighbor               → szomszédok 
+ 
+show ip ospf interface              → interfész OSPF info 
+ 
+show ip route ospf                  → OSPF tanult útvonalak 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+DHCP SZERVER (ROUTER) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+ip dhcp excluded-address 192.168.10.1 192.168.10.10   → kizárt tartomány 
+ 
+ 
+ 
+ip dhcp pool IT_DHCP                → pool létrehozása 
+ 
+network 192.168.10.0 255.255.255.0 
+ 
+default-router 192.168.10.1        → átjáró 
+ 
+dns-server 8.8.8.8                 → DNS szerver 
+ 
+lease 7                            → bérleti idő (napokban) 
+ 
+ 
+ 
+show ip dhcp pool                   → pool info 
+ 
+show ip dhcp binding                → kiosztott IP-k 
+ 
+show ip dhcp conflict               → konfliktusok 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+ACL - HOZZÁFÉRÉSI LISTÁK 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+! Standard ACL (forrás IP alapján, közel a célhoz): 
+ 
+access-list 10 permit 192.168.50.10     → csak ez az IP mehet 
+ 
+access-list 10 deny any                 → minden más tiltva (implicit deny egyébként is van) 
+ 
+ 
+ 
+! Standard ACL named: 
+ 
+ip access-list standard TILT_HR 
+ 
+deny 192.168.20.0 0.0.0.255 
+ 
+permit any 
+ 
+ 
+ 
+! Extended ACL (forrás+cél+protokoll, közel a forráshoz): 
+ 
+access-list 100 deny ip 192.168.20.0 0.0.0.255 192.168.10.0 0.0.0.255 
+ 
+access-list 100 permit ip any any 
+ 
+ 
+ 
+! Extended named ACL: 
+ 
+ip access-list extended NO_HR_TO_IT 
+ 
+deny ip 192.168.20.0 0.0.0.255 192.168.10.0 0.0.0.255 
+ 
+permit ip any any 
+ 
+ 
+ 
+! ACL alkalmazása interfészre: 
+ 
+interface GigabitEthernet0/1 
+ 
+ip access-group 100 in             → bejövő forgalomra 
+ 
+ip access-group 100 out            → kimenő forgalomra 
+ 
+ 
+ 
+! ACL alkalmazása VTY vonalra (SSH/Telnet): 
+ 
+line vty 0 4 
+ 
+access-class 10 in 
+ 
+ 
+ 
+show access-lists                   → összes ACL megtekintése 
+ 
+show ip interface g0/1              → interfészen lévő ACL 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+IPv6 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+ipv6 unicast-routing                → IPv6 routing engedélyezése (global config) 
+ 
+ 
+ 
+interface GigabitEthernet0/1 
+ 
+ipv6 address 2001:DB8:1::1/64      → globális unicast cím 
+ 
+ipv6 address FE80::1 link-local    → link-local cím kézi beállítása 
+ 
+no shutdown 
+ 
+ 
+ 
+show ipv6 interface brief           → IPv6 interfészek 
+ 
+show ipv6 route                     → IPv6 routing tábla 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+CDP (CISCO DISCOVERY PROTOCOL) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+no cdp run                          → CDP letiltása globálisan 
+ 
+cdp run                             → CDP engedélyezése globálisan 
+ 
+ 
+ 
+interface GigabitEthernet0/0 
+ 
+no cdp enable                      → CDP letiltása egy interfészen (külső/WAN) 
+ 
+cdp enable                         → CDP engedélyezése interfészen 
+ 
+ 
+ 
+show cdp neighbors                  → szomszédos Cisco eszközök 
+ 
+show cdp neighbors detail           → részletes szomszéd info 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+SPANNING TREE (STP / RSTP) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+spanning-tree mode rapid-pvst       → RSTP (Rapid PVST+) mód beállítása 
+ 
+ 
+ 
+! Root Bridge beállítása (legalacsonyabb prioritás): 
+ 
+spanning-tree vlan 1 priority 0         → lehetséges: 0, 4096, 8192, stb. 
+ 
+spanning-tree vlan 1 root primary       → automatikusan beállítja a prioritást 
+ 
+ 
+ 
+! Secondary root: 
+ 
+spanning-tree vlan 1 root secondary 
+ 
+ 
+ 
+! PortFast (végponti portokra, pl. PC): 
+ 
+interface FastEthernet0/1 
+ 
+spanning-tree portfast 
+ 
+ 
+ 
+! BPDU Guard (PortFast portokra biztonsági célból): 
+ 
+interface FastEthernet0/1 
+ 
+spanning-tree bpduguard enable 
+ 
+ 
+ 
+show spanning-tree                  → STP/RSTP státusz 
+ 
+show spanning-tree vlan 1           → adott VLAN STP info 
+ 
+show spanning-tree summary          → összefoglaló 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+SSH BEÁLLÍTÁS 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+hostname R1                         → hostname szükséges az SSH-hoz! 
+ 
+ip domain-name vizsga.local         → domain név kell a kulcsgeneráláshoz 
+ 
+crypto key generate rsa             → RSA kulcspár generálása (min. 1024 bit) 
+ 
+ip ssh version 2                    → SSH v2 engedélyezése 
+ 
+username admin privilege 15 secret jelszó   → helyi felhasználó 
+ 
+ 
+ 
+line vty 0 4 
+ 
+login local                        → helyi felhasználói adatbázis 
+ 
+transport input ssh 
+ 
+ 
+ 
+show ip ssh                         → SSH státusz 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+SWITCH MANAGEMENT IP 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+interface vlan 1                    → management VLAN interfész 
+ 
+ip address 192.168.1.2 255.255.255.0 
+ 
+no shutdown 
+ 
+ip default-gateway 192.168.1.1      → átjáró a switchnek 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+HASZNOS SHOW / DEBUG PARANCSOK 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+show version                        → IOS verzió, hardware info 
+ 
+show ip interface brief             → interfészek rövid összefoglalója 
+ 
+show interfaces status              → switchport státuszok 
+ 
+show running-config                 → futó konfig 
+ 
+show startup-config                 → mentett konfig 
+ 
+show ip route                       → routing tábla 
+ 
+show vlan brief                     → VLAN-ok 
+ 
+show interfaces trunk               → trunk portok 
+ 
+show port-security                  → port security összefoglaló 
+ 
+show access-lists                   → ACL-ek 
+ 
+show ip dhcp binding                → DHCP kiosztások 
+ 
+show ip ospf neighbor               → OSPF szomszédok 
+ 
+show spanning-tree                  → STP info 
+ 
+show cdp neighbors                  → CDP szomszédok 
+ 
+show mac address-table              → MAC cím tábla (switch) 
+ 
+ 
+ 
+ping 192.168.1.1                    → ping teszt 
+ 
+traceroute 192.168.1.1              → traceroute 
+ 
+ 
+ 
+debug ip routing                    → routing debug (! elég bőbeszédű) 
+ 
+undebug all                         → minden debug kikapcsolása 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+GYORS TIPPEK VIZSGÁRA 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+- Mindig mentsd el: copy run start 
+ 
+- Ha elgépeltél valamit: no <parancs> törli 
+ 
+- ? használható bármikor a parancs közepén is 
+ 
+- Tab kiegészíti a parancsot 
+ 
+- Router on a stick: a fizikai interfészt is be kell kapcsolni (no shutdown)! 
+ 
+- VLAN trunk nélkül a router on a stick nem fog működni 
+ 
+- ACL sorrend számít! Mindig felülről lefelé dolgozik 
+ 
+- Standard ACL: forrás IP, közel a CÉLHOZ alkalmazzuk 
+ 
+- Extended ACL: forrás+cél, közel a FORRÁSHOZ alkalmazzuk 
+ 
+- Port security csak access módú porton működik 
+ 
+- RSTP priority értékek: 0, 4096, 8192, 12288, 16384... 
+ 
+- Floating static route: magasabb AD = tartalék útvonal 
+ 
+- CDP letiltás külső interfészen: biztonsági best practice 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+WILDCARD MASZK GYORSSEGÍTSÉG 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+/24 = 255.255.255.0   → wildcard: 0.0.0.255 
+ 
+/25 = 255.255.255.128 → wildcard: 0.0.0.127 
+ 
+/26 = 255.255.255.192 → wildcard: 0.0.0.63 
+ 
+/27 = 255.255.255.224 → wildcard: 0.0.0.31 
+ 
+/28 = 255.255.255.240 → wildcard: 0.0.0.15 
+ 
+/29 = 255.255.255.248 → wildcard: 0.0.0.7 
+ 
+/30 = 255.255.255.252 → wildcard: 0.0.0.3 
+ 
+/32 = 255.255.255.255 → wildcard: 0.0.0.0  (egy hoszt) 
+ 
+ 
+ 
+Képlet: wildcard = 255.255.255.255 - alhálózati maszk 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+ 
+ 
+ 
+ 
+╔══════════════════════════════════════════════════════════════════╗ 
+ 
+║                        WINDOWS SZERVER                          ║ 
+ 
+╚══════════════════════════════════════════════════════════════════╝ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+ACTIVE DIRECTORY - TARTOMÁNYVEZÉRLŐ TELEPÍTÉSE 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+GUI módszer: 
+ 
+  Server Manager → Add Roles and Features 
+ 
+  → Active Directory Domain Services (AD DS) 
+ 
+  → Telepítés után: "Promote this server to a domain controller" 
+ 
+  → Add a new forest → Root domain name: vizsga.local 
+ 
+  → DSRM jelszó megadása → Telepítés 
+ 
+ 
+ 
+PowerShell módszer: 
+ 
+  Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools 
+ 
+  Install-ADDSForest -DomainName "vizsga.local" -InstallDns 
+ 
+ 
+ 
+Ellenőrzés: 
+ 
+  Get-ADDomain 
+ 
+  Get-ADForest 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+ACTIVE DIRECTORY - OU, CSOPORT, FELHASZNÁLÓ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+GUI módszer: 
+ 
+  Server Manager → Tools → Active Directory Users and Computers (ADUC) 
+ 
+  → Jobb klikk a tartományon → New → Organizational Unit 
+ 
+  → OU neve: Gyakornokok 
+ 
+  → OU-n belül: New → Group → neve: RendszergazdaAsszisztensek 
+ 
+    (Group scope: Global, Group type: Security) 
+ 
+  → New → User → First name: Kovacs.Bela 
+ 
+    → User logon name: Kovacs.Bela 
+ 
+    → Jelszó: Jelszo2026! 
+ 
+    → Uncheck: "User must change password at next logon" (ha kell) 
+ 
+  → Felhasználó hozzáadása csoporthoz: 
+ 
+    Jobb klikk a felhasználón → Add to a group → RendszergazdaAsszisztensek 
+ 
+ 
+ 
+PowerShell módszer: 
+ 
+  New-ADOrganizationalUnit -Name "Gyakornokok" -Path "DC=vizsga,DC=local" 
+ 
+ 
+ 
+  New-ADGroup -Name "RendszergazdaAsszisztensek" ` 
+ 
+    -GroupScope Global -GroupCategory Security ` 
+ 
+    -Path "OU=Gyakornokok,DC=vizsga,DC=local" 
+ 
+ 
+ 
+  New-ADUser -Name "Kovacs.Bela" ` 
+ 
+    -AccountPassword (ConvertTo-SecureString "Jelszo2026!" -AsPlainText -Force) ` 
+ 
+    -Enabled $true ` 
+ 
+    -Path "OU=Gyakornokok,DC=vizsga,DC=local" 
+ 
+ 
+ 
+  Add-ADGroupMember -Identity "RendszergazdaAsszisztensek" -Members "Kovacs.Bela" 
+ 
+ 
+ 
+Ellenőrzés: 
+ 
+  Get-ADUser -Identity "Kovacs.Bela" 
+ 
+  Get-ADGroupMember -Identity "RendszergazdaAsszisztensek" 
+ 
+  Get-ADOrganizationalUnit -Filter * 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+CSOPORTHÁZIREND (GPO) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+GUI módszer: 
+ 
+  Server Manager → Tools → Group Policy Management (GPMC) 
+ 
+ 
+ 
+  ÚJ GPO LÉTREHOZÁSA ÉS LINKELÉSE: 
+ 
+  → Jobb klikk az OU-n (pl. Gyakornokok) → Create a GPO in this domain and Link it here 
+ 
+  → Név megadása (pl. VezerloPult_Tiltás) 
+ 
+ 
+ 
+  GPO SZERKESZTÉSE: 
+ 
+  → Jobb klikk a GPO-n → Edit → Group Policy Management Editor megnyílik 
+ 
+ 
+ 
+  FOLDER REDIRECTION (Mappa átirányítás): 
+ 
+  → User Configuration → Policies → Windows Settings → Folder Redirection 
+ 
+  → Jobb klikk Documents → Properties 
+ 
+  → Setting: Basic – Redirect everyone's folder to the same location 
+ 
+ Asd2 
+ 
+1. FELADAT: DHCP SZEREPKÖR ÉS SCOPE (Windows szerver) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+Feladat: DHCP telepítés, "Kliensek" scope, 10.10.10.0/24, 
+ 
+         kiosztható: 10.10.10.100 - 10.10.10.200 
+ 
+ 
+ 
+GUI MEGOLDÁS lépései: 
+ 
+ 
+ 
+  1. Server Manager → Manage → Add Roles and Features 
+ 
+  2. Role-based installation → Next 
+ 
+  3. Server kiválasztása → Next 
+ 
+  4. DHCP Server pipálása → Add Features → Next → Next → Install 
+ 
+  5. Telepítés után: sárga zászló → "Complete DHCP Configuration" 
+ 
+     → Commit (domain admin jogosultsággal) 
+ 
+ 
+ 
+  6. Server Manager → Tools → DHCP 
+ 
+  7. Bal oldalt: szerver neve → IPv4 → jobb klikk → New Scope 
+ 
+  8. Next → Name: Kliensek → Next 
+ 
+  9. Start IP: 10.10.10.100 
+ 
+     End IP:   10.10.10.200 
+ 
+     Mask:     255.255.255.0 → Next 
+ 
+  10. Exclusions: nem kell → Next 
+ 
+  11. Lease Duration: alapértelmezett (8 nap) → Next 
+ 
+  12. "Yes, I want to configure these options now" → Next 
+ 
+  13. Default Gateway: pl. 10.10.10.1 → Add → Next 
+ 
+  14. DNS: Next (alapértelmezett mehet) 
+ 
+  15. WINS: Next 
+ 
+  16. Activate scope: Yes → Next → Finish 
+ 
+ 
+ 
+ELLENŐRZÉS: 
+ 
+  DHCP konzol → IPv4 → Kliensek → zöld pipa legyen! 
+ 
+  Scope properties: 10.10.10.100 - 10.10.10.200 
+ 
+ 
+ 
+PowerShell alternatíva: 
+ 
+  Install-WindowsFeature -Name DHCP -IncludeManagementTools 
+ 
+  Add-DhcpServerV4Scope -Name "Kliensek" ` 
+ 
+    -StartRange 10.10.10.100 ` 
+ 
+    -EndRange 10.10.10.200 ` 
+ 
+    -SubnetMask 255.255.255.0 ` 
+ 
+    -State Active 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+2. FELADAT: GPO - KÉPERNYŐZÁR (KepernyoZar) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+Feladat: GPO neve: KepernyoZar, tartomány gyökeréhez linkelve, 
+ 
+         képernyővédő 5 perc után, feloldáshoz jelszó kell 
+ 
+ 
+ 
+GUI MEGOLDÁS: 
+ 
+ 
+ 
+  1. Server Manager → Tools → Group Policy Management 
+ 
+  2. Bal oldalt: Forest → Domains → vizsga.local (vagy a tartomány neve) 
+ 
+  3. Jobb klikk a tartomány gyökerén → Create a GPO in this domain and Link it here 
+ 
+  4. Név: KepernyoZar → OK 
+ 
+  5. Jobb klikk a KepernyoZar GPO-n → Edit 
+ 
+ 
+ 
+  A Group Policy Management Editorban: 
+ 
+  → User Configuration → Policies → Administrative Templates 
+ 
+    → Control Panel → Personalization 
+ 
+ 
+ 
+  Aktiválni kell ezeket: 
+ 
+  a) "Enable screen saver" 
+ 
+     → Double-click → Enabled → OK 
+ 
+ 
+ 
+  b) "Screen saver timeout" 
+ 
+     → Double-click → Enabled 
+ 
+     → Seconds: 300   (5 perc = 300 másodperc) 
+ 
+     → OK 
+ 
+ 
+ 
+  c) "Password protect the screen saver" 
+ 
+     → Double-click → Enabled → OK 
+ 
+ 
+ 
+  6. GPO Editor bezárása 
+ 
+  7. Szükség esetén frissítés: CMD-ben → gpupdate /force 
+ 
+ 
+ 
+ELLENŐRZÉS: 
+ 
+  Group Policy Management-ben látható legyen a KepernyoZar 
+ 
+  a tartomány gyökeréhez linkelve (Linked Group Policy Objects alatt) 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+3. FELADAT: MMC EGYEDI KONZOL (Felugyelet.msc) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+Feladat: MMC konzol, Services + Event Viewer snap-in, 
+ 
+         mentés: Asztal → Felugyelet.msc 
+ 
+ 
+ 
+GUI MEGOLDÁS: 
+ 
+ 
+ 
+  1. Win + R → mmc → Enter 
+ 
+  2. File → Add/Remove Snap-in  (Ctrl+M) 
+ 
+  3. Bal oldali listából: 
+ 
+     → "Services" → Add → Local computer → Finish 
+ 
+     → "Event Viewer" → Add → Local computer → Finish 
+ 
+  4. OK gomb 
+ 
+  5. File → Save As 
+ 
+  6. Navigálj az Asztalra (Desktop) 
+ 
+  7. Fájlnév: Felugyelet 
+ 
+  8. Mentés (automatikusan .msc kiterjesztéssel menti) 
+ 
+ 
+ 
+ELLENŐRZÉS: 
+ 
+  Asztalon megjelenik a Felugyelet.msc ikon 
+ 
+  Dupla klikk → megnyílik a konzol mindkét snap-innel 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+4. FELADAT: BIND9 DNS TELEPÍTÉS (Linux/Ubuntu szerver) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+Feladat: bind9 telepítés, ellenőrzés hogy elindult-e 
+ 
+ 
+ 
+MEGOLDÁS: 
+ 
+ 
+ 
+  sudo apt update 
+ 
+  sudo apt install bind9 bind9utils -y 
+ 
+ 
+ 
+  ! Ellenőrzés hogy fut-e: 
+ 
+  sudo systemctl status bind9 
+ 
+ 
+ 
+  ! Ha nem indult el automatikusan: 
+ 
+  sudo systemctl start bind9 
+ 
+  sudo systemctl enable bind9 
+ 
+ 
+ 
+ELLENŐRZÉS: 
+ 
+  sudo systemctl status bind9 
+ 
+  → "Active: active (running)" zöld szöveggel 
+ 
+ 
+ 
+  named -v                        → BIND verziószám (ha települt) 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+5. FELADAT: PIPELINE - SYSLOG SZŰRÉS (Linux) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+Feladat: /var/log/syslog utolsó 50 sor, "error" szűrés, 
+ 
+         eredmény → /tmp/hibak.log 
+ 
+ 
+ 
+MEGOLDÁS: 
+ 
+ 
+ 
+  tail -n 50 /var/log/syslog | grep "error" > /tmp/hibak.log 
+ 
+ 
+ 
+  ! Ha a syslog helyett messages fájl van (pl. régebbi rendszeren): 
+ 
+  tail -n 50 /var/log/messages | grep "error" > /tmp/hibak.log 
+ 
+ 
+ 
+  ! Ha kis-nagybetű érzéketlen szűrés kell (Error, ERROR is): 
+ 
+  tail -n 50 /var/log/syslog | grep -i "error" > /tmp/hibak.log 
+ 
+ 
+ 
+ELLENŐRZÉS: 
+ 
+  cat /tmp/hibak.log              → fájl tartalma (lehet üres, ez is helyes!) 
+ 
+  ls -la /tmp/hibak.log           → fájl létezik-e 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+6. FELADAT: SZIMBOLIKUS LINK (Linux) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+Feladat: Symlink a netplan fájlra, helye: /home/vizsgazo/halozat_konfig_link 
+ 
+ 
+ 
+MEGOLDÁS: 
+ 
+ 
+ 
+  ! Ubuntu rendszeren a netplan fájl helye általában: 
+ 
+  ls /etc/netplan/                → megmutatja a pontos fájlnevet 
+ 
+ 
+ 
+  ! Szimbolikus link létrehozása: 
+ 
+  ln -s /etc/netplan/00-installer-config.yaml /home/vizsgazo/halozat_konfig_link 
+ 
+ 
+ 
+  ! Ha más a netplan fájlnév (pl. 01-netcfg.yaml): 
+ 
+  ln -s /etc/netplan/01-netcfg.yaml /home/vizsgazo/halozat_konfig_link 
+ 
+ 
+ 
+  ! Alternatíva ha /etc/network/interfaces létezik: 
+ 
+  ln -s /etc/network/interfaces /home/vizsgazo/halozat_konfig_link 
+ 
+ 
+ 
+ELLENŐRZÉS: 
+ 
+  ls -la /home/vizsgazo/ 
+ 
+  → halozat_konfig_link -> /etc/netplan/00-installer-config.yaml 
+ 
+  (nyíllal mutatja mire mutat a link) 
+ 
+ 
+ 
+  readlink /home/vizsgazo/halozat_konfig_link 
+ 
+  → /etc/netplan/00-installer-config.yaml 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ → Target folder location: \\Szerver\Profilok 
+ 
+ 
+ 
+  VEZÉRLŐPULT TILTÁSA: 
+ 
+  → User Configuration → Policies → Administrative Templates 
+ 
+    → Control Panel → Prohibit access to Control Panel and PC Settings → Enabled 
+ 
+ 
+ 
+  KÉPERNYŐVÉDŐ (screensaver): 
+ 
+  → User Configuration → Policies → Administrative Templates → Control Panel → Personalization 
+ 
+    → Enable screen saver → Enabled 
+ 
+    → Screen saver timeout → 300 másodperc (5 perc) 
+ 
+    → Password protect the screen saver → Enabled 
+ 
+ 
+ 
+  GPO FRISSÍTÉSE: 
+ 
+  gpupdate /force                    → azonnal frissíti a házirendet (CMD-ben) 
+ 
+ 
+ 
+PowerShell módszer: 
+ 
+  New-GPO -Name "VezerloPult_Tiltas" 
+ 
+  New-GPLink -Name "VezerloPult_Tiltas" -Target "OU=Gyakornokok,DC=vizsga,DC=local" 
+ 
+ 
+ 
+Ellenőrzés: 
+ 
+  Get-GPO -All 
+ 
+  gpresult /r                        → alkalmazott GPO-k a gépen 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+DHCP SZERVER TELEPÍTÉS ÉS KONFIGURÁCIÓ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+GUI módszer: 
+ 
+  Server Manager → Add Roles and Features → DHCP Server 
+ 
+  → Telepítés után: Tools → DHCP 
+ 
+ 
+ 
+  ÚJ SCOPE (HATÓKÖR): 
+ 
+  → Jobb klikk IPv4 → New Scope 
+ 
+  → Név: Kliensek 
+ 
+  → IP tartomány: 10.10.10.100 – 10.10.10.200 
+ 
+  → Subnet mask: 255.255.255.0 
+ 
+  → Kizárások: ha kell 
+ 
+  → Átjáró (Default gateway): pl. 10.10.10.1 
+ 
+  → DNS szerver megadása 
+ 
+  → Scope aktiválása: Yes 
+ 
+ 
+ 
+PowerShell módszer: 
+ 
+  Install-WindowsFeature -Name DHCP -IncludeManagementTools 
+ 
+ 
+ 
+  Add-DhcpServerV4Scope -Name "Kliensek" ` 
+ 
+    -StartRange 10.10.10.100 -EndRange 10.10.10.200 ` 
+ 
+    -SubnetMask 255.255.255.0 -State Active 
+ 
+ 
+ 
+  Set-DhcpServerV4OptionValue -ScopeId 10.10.10.0 ` 
+ 
+    -Router 10.10.10.1 -DnsServer 10.10.10.1 
+ 
+ 
+ 
+Ellenőrzés: 
+ 
+  Get-DhcpServerV4Scope 
+ 
+  Get-DhcpServerV4Lease -ScopeId 10.10.10.0 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+SZOLGÁLTATÁSOK KEZELÉSE 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+GUI módszer: 
+ 
+  Server Manager → Tools → Services  (vagy: services.msc futtatva) 
+ 
+  → Keresés: Print Spooler 
+ 
+  → Jobb klikk → Properties 
+ 
+  → Stop (leállítás) 
+ 
+  → Startup type: Disabled (Letiltva) 
+ 
+  → OK 
+ 
+ 
+ 
+PowerShell módszer: 
+ 
+  Stop-Service -Name "Spooler" 
+ 
+  Set-Service -Name "Spooler" -StartupType Disabled 
+ 
+ 
+ 
+  Get-Service -Name "Spooler"         → státusz ellenőrzés 
+ 
+  Start-Service -Name "Spooler"       → indítás (ha kell) 
+ 
+  Restart-Service -Name "Spooler"     → újraindítás 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+HELYI FELHASZNÁLÓK (PowerShell) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+  New-LocalUser -Name "TesztUser" ` 
+ 
+    -Password (ConvertTo-SecureString "Jelszo123!" -AsPlainText -Force) ` 
+ 
+    -FullName "Teszt Felhasználó" ` 
+ 
+    -Description "Vizsga user" 
+ 
+ 
+ 
+  Add-LocalGroupMember -Group "Administrators" -Member "TesztUser" 
+ 
+ 
+ 
+  Get-LocalUser                       → helyi felhasználók listája 
+ 
+  Remove-LocalUser -Name "TesztUser"  → felhasználó törlése 
+ 
+  Set-LocalUser -Name "TesztUser" -Password (ConvertTo-SecureString "Uj123!" -AsPlainText -Force) 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+MMC - EGYEDI FELÜGYELETI KONZOL 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+GUI módszer: 
+ 
+  Futtatás (Win+R) → mmc → Enter 
+ 
+  → File → Add/Remove Snap-in 
+ 
+  → Hozzáadás: Services (Szolgáltatások) 
+ 
+  → Hozzáadás: Event Viewer (Eseménynapló) 
+ 
+  → OK 
+ 
+  → File → Save As → Asztal → Felugyelet.msc 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+HASZNOS WINDOWS PARANCSOK (CMD/PowerShell) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+ipconfig /all                       → hálózati beállítások 
+ 
+ipconfig /flushdns                  → DNS gyorsítótár törlése 
+ 
+ping 8.8.8.8                        → kapcsolat teszt 
+ 
+nslookup vizsga.local               → DNS lekérdezés 
+ 
+netstat -an                         → nyitott portok 
+ 
+tasklist                            → futó folyamatok 
+ 
+taskkill /IM notepad.exe /F         → folyamat leállítása 
+ 
+ 
+ 
+Get-NetIPAddress                    → IP-k PowerShellben 
+ 
+Get-NetAdapter                      → hálózati adapterek 
+ 
+Restart-Computer                    → újraindítás 
+ 
+shutdown /s /t 0                    → azonnali leállítás 
+ 
+sfc /scannow                        → rendszerfájl ellenőrzés 
+ 
+eventvwr                            → Eseménynapló megnyitása 
+ 
+compmgmt.msc                        → Számítógép-kezelő 
+ 
+diskmgmt.msc                        → Lemezkezelő 
+ 
+devmgmt.msc                         → Eszközkezelő 
+ 
+sysdm.cpl                           → Rendszertulajdonságok 
+ 
+ 
+ 
+ 
+ 
+╔══════════════════════════════════════════════════════════════════╗ 
+ 
+║                         LINUX SZERVER                           ║ 
+ 
+╚══════════════════════════════════════════════════════════════════╝ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+ALAPVETŐ LINUX PARANCSOK 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+ls -la                              → fájlok listázása (rejtett is) 
+ 
+cd /etc/apache2                     → könyvtár váltás 
+ 
+pwd                                 → aktuális könyvtár 
+ 
+mkdir -p /adatok/bizalmas           → könyvtár létrehozása (szülőkkel együtt) 
+ 
+rm -rf /mappa                       → mappa törlése (óvatosan!) 
+ 
+cp /forrás /cél                     → másolás 
+ 
+mv /régi /új                        → átnevezés/mozgatás 
+ 
+cat /etc/hosts                      → fájl tartalmának kiírása 
+ 
+nano /etc/hosts                     → fájl szerkesztése (nano szerkesztő) 
+ 
+chmod 750 /mappa                    → jogosultságok beállítása 
+ 
+chown root:vizsgazo /mappa          → tulajdonos beállítása 
+ 
+sudo su                             → root váltás 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+CSOMAGKEZELÉS (apt) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+sudo apt update                     → csomaglista frissítése (mindig először!) 
+ 
+sudo apt upgrade                    → csomagok frissítése 
+ 
+sudo apt install apache2            → csomag telepítése 
+ 
+sudo apt install bind9              → BIND DNS telepítése 
+ 
+sudo apt remove apache2             → csomag eltávolítása 
+ 
+sudo apt purge apache2              → eltávolítás + konfig fájlok törlése 
+ 
+dpkg -l | grep apache               → telepített csomagok szűrése 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+APACHE2 WEB SZERVER 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+TELEPÍTÉS: 
+ 
+  sudo apt update 
+ 
+  sudo apt install apache2 
+ 
+ 
+ 
+SZOLGÁLTATÁS KEZELÉS: 
+ 
+  sudo systemctl start apache2       → indítás 
+ 
+  sudo systemctl stop apache2        → leállítás 
+ 
+  sudo systemctl restart apache2     → újraindítás 
+ 
+  sudo systemctl enable apache2      → autostart bekapcsolás 
+ 
+  sudo systemctl status apache2      → státusz ellenőrzés 
+ 
+ 
+ 
+ALAPÉRTELMEZETT OLDAL LETILTÁSA: 
+ 
+  sudo a2dissite 000-default.conf 
+ 
+ 
+ 
+ÚJ VHOST KONFIG LÉTREHOZÁSA: 
+ 
+  sudo nano /etc/apache2/sites-available/ujweb.conf 
+ 
+ 
+ 
+  Konfig tartalma: 
+ 
+  ---------------------------------------- 
+ 
+  <VirtualHost *:80> 
+ 
+      ServerName ujweb.local 
+ 
+      DocumentRoot /var/www/ujweb 
+ 
+      ErrorLog ${APACHE_LOG_DIR}/error.log 
+ 
+      CustomLog ${APACHE_LOG_DIR}/access.log combined 
+ 
+  </VirtualHost> 
+ 
+  ---------------------------------------- 
+ 
+ 
+ 
+  sudo mkdir -p /var/www/ujweb 
+ 
+  sudo nano /var/www/ujweb/index.html   → tartalom: <h1>Sikeres szerver vizsga!</h1> 
+ 
+ 
+ 
+ÚJ OLDAL ENGEDÉLYEZÉSE: 
+ 
+  sudo a2ensite ujweb.conf 
+ 
+  sudo systemctl reload apache2 
+ 
+ 
+ 
+MÓDOSÍTS ALAP index.html-t (ha kell): 
+ 
+  sudo nano /var/www/html/index.html 
+ 
+ 
+ 
+Ellenőrzés: 
+ 
+  curl http://localhost                → weboldal lekérése 
+ 
+  sudo apache2ctl configtest           → konfig ellenőrzés 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+SWAP FÁJL LÉTREHOZÁSA 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+  sudo fallocate -l 1G /swapfile      → 1 GB swap fájl létrehozása 
+ 
+  (alternatíva: sudo dd if=/dev/zero of=/swapfile bs=1M count=1024) 
+ 
+ 
+ 
+  sudo chmod 600 /swapfile            → csak root olvashatja 
+ 
+  sudo mkswap /swapfile               → swap formázás 
+ 
+  sudo swapon /swapfile               → aktiválás 
+ 
+ 
+ 
+  ! Hogy újraindítás után is megmaradjon: 
+ 
+  sudo nano /etc/fstab 
+ 
+  → Hozzáadni: /swapfile none swap sw 0 0 
+ 
+ 
+ 
+Ellenőrzés: 
+ 
+  swapon --show                       → aktív swap 
+ 
+  free -h                             → memória + swap összesítő 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+PIPELINE - PS, PIPE, GREP, ÁTIRÁNYÍTÁS 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+  ps aux                              → futó folyamatok listája 
+ 
+  ps aux | grep apache                → csak apache folyamatok 
+ 
+  ps aux | grep apache > /tmp/apache_proc.txt   → fájlba mentés 
+ 
+ 
+ 
+  grep "error" /var/log/syslog        → error sorok a syslog-ban 
+ 
+  tail -n 50 /var/log/syslog          → utolsó 50 sor 
+ 
+  tail -n 50 /var/log/syslog | grep "error" > /tmp/hibak.log 
+ 
+ 
+ 
+  cat /var/log/syslog | grep "error"  → szűrés pipe-pal 
+ 
+  grep -i "error" /var/log/syslog     → kis-nagybetű érzéketlen szűrés 
+ 
+  grep -n "error" /var/log/syslog     → sorszámmal együtt 
+ 
+ 
+ 
+  ! Átirányítás összefoglaló: 
+ 
+  >   → felülírja a fájlt 
+ 
+  >>  → hozzáfűz a fájlhoz 
+ 
+  |   → pipe: bal oldal kimenete → jobb oldal bemenete 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+FÁJLJOGOSULTSÁGOK ÉS ACL 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+ALAP CHMOD: 
+ 
+  chmod 777 /mappa   → rwxrwxrwx (mindenki mindent) 
+ 
+  chmod 755 /mappa   → rwxr-xr-x (owner: rwx, group+others: r-x) 
+ 
+  chmod 750 /mappa   → rwxr-x--- (owner: rwx, group: r-x, others: semmi) 
+ 
+  chmod 700 /mappa   → rwx------ (csak az owner) 
+ 
+  chmod +x szkript.sh → futtatási jog hozzáadása 
+ 
+ 
+ 
+CHOWN: 
+ 
+  chown vizsgazo /mappa              → tulajdonos váltás 
+ 
+  chown root:vizsgazo /mappa         → tulajdonos:csoport 
+ 
+  chown -R root:vizsgazo /mappa      → rekurzív (almappákra is) 
+ 
+ 
+ 
+ACL (részletesebb jogosultságok): 
+ 
+  sudo apt install acl               → ACL csomag telepítése (ha nincs) 
+ 
+ 
+ 
+  setfacl -m u:vizsgazo:rwx /adatok/bizalmas    → vizsgazo user: teljes jog 
+ 
+  setfacl -m u:root:rwx /adatok/bizalmas        → root: teljes jog 
+ 
+  setfacl -m o::--- /adatok/bizalmas            → mások: semmi jog 
+ 
+ 
+ 
+  getfacl /adatok/bizalmas           → ACL megtekintése 
+ 
+ 
+ 
+  ! A feladatban: csak root és vizsgazo (rwx), mindenki más semmi (---) 
+ 
+  sudo mkdir -p /adatok/bizalmas 
+ 
+  sudo setfacl -m u:vizsgazo:rwx /adatok/bizalmas 
+ 
+  sudo setfacl -m o::--- /adatok/bizalmas 
+ 
+  getfacl /adatok/bizalmas 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+BASH SZKRIPT ÍRÁSA 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+  sudo nano /root/mentes.sh 
+ 
+ 
+ 
+  Szkript tartalma: 
+ 
+  ---------------------------------------- 
+ 
+  #!/bin/bash 
+ 
+  tar -czf /tmp/webmentes.tar.gz /var/www/html 
+ 
+  echo "Mentés kész: $(date)" 
+ 
+  ---------------------------------------- 
+ 
+ 
+ 
+  sudo chmod +x /root/mentes.sh      → futtatási jog adása 
+ 
+  sudo /root/mentes.sh               → szkript futtatása 
+ 
+ 
+ 
+  ! Fontos sor: #!/bin/bash → ez mondja meg, hogy bash szkript 
+ 
+  ! tar kapcsolók: c=create, z=gzip, f=fájlnév 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+SZIMBOLIKUS LINK (SYMLINK) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+  ln -s /etc/netplan/00-installer-config.yaml /home/vizsgazo/halozat_konfig_link 
+ 
+ 
+ 
+  ! Szintaxis: ln -s <eredeti fájl> <link neve/helye> 
+ 
+  ! -s = symbolic (szimbolikus), különben hard link lenne 
+ 
+ 
+ 
+  ls -la /home/vizsgazo/              → megmutatja a linket nyíllal (->) 
+ 
+  readlink /home/vizsgazo/halozat_konfig_link   → mire mutat a link 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+DNS SZERVER (BIND9) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+  sudo apt install bind9 bind9utils 
+ 
+ 
+ 
+  sudo systemctl start bind9 
+ 
+  sudo systemctl enable bind9 
+ 
+  sudo systemctl status bind9 
+ 
+ 
+ 
+  ! Konfig fájlok helye: 
+ 
+  /etc/bind/named.conf               → fő konfig 
+ 
+  /etc/bind/named.conf.options       → beállítások 
+ 
+  /etc/bind/named.conf.local         → saját zónák 
+ 
+ 
+ 
+  ! Egyszerű ellenőrzés: 
+ 
+  named-checkconf                    → konfig ellenőrzés 
+ 
+  dig @localhost vizsga.local        → DNS lekérdezés tesztelése 
+ 
+  nslookup vizsga.local 127.0.0.1    → névfeloldás tesztelése 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+SYSTEMCTL - SZOLGÁLTATÁS KEZELÉS 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+  sudo systemctl start <szolgáltatás> 
+ 
+  sudo systemctl stop <szolgáltatás> 
+ 
+  sudo systemctl restart <szolgáltatás> 
+ 
+  sudo systemctl reload <szolgáltatás>     → konfig újratöltés (nem áll le) 
+ 
+  sudo systemctl enable <szolgáltatás>     → autostart BE 
+ 
+  sudo systemctl disable <szolgáltatás>    → autostart KI 
+ 
+  sudo systemctl status <szolgáltatás>     → státusz + utolsó logok 
+ 
+  sudo systemctl is-active <szolgáltatás>  → active / inactive 
+ 
+ 
+ 
+  journalctl -u apache2              → apache2 logjai 
+ 
+  journalctl -xe                     → legutóbbi hibák 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+HÁLÓZAT LINUX ALATT 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+  ip a                               → IP címek 
+ 
+  ip r                               → routing tábla 
+ 
+  ping 8.8.8.8                       → kapcsolat teszt 
+ 
+  curl http://localhost               → weblap lekérése 
+ 
+  ss -tuln                           → nyitott portok (netstat helyett) 
+ 
+  hostname                           → gép neve 
+ 
+  hostname -I                        → csak az IP cím 
+ 
+ 
+ 
+  ! Netplan (Ubuntu hálózat konfig): 
+ 
+  sudo nano /etc/netplan/00-installer-config.yaml 
+ 
+  sudo netplan apply                 → beállítások alkalmazása 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+FELHASZNÁLÓK LINUX ALATT 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+  sudo useradd -m vizsgazo           → felhasználó létrehozása (home mappa is) 
+ 
+  sudo passwd vizsgazo               → jelszó beállítása 
+ 
+  sudo usermod -aG sudo vizsgazo     → sudo jogok adása 
+ 
+  sudo userdel -r vizsgazo           → felhasználó törlése (home mappával) 
+ 
+ 
+ 
+  whoami                             → aktuális felhasználó 
+ 
+  id vizsgazo                        → UID, GID, csoportok 
+ 
+  cat /etc/passwd                    → összes felhasználó 
+ 
+  groups vizsgazo                    → melyik csoportokban van 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+LOG FÁJLOK - HASZNOS HELYEK 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+  /var/log/syslog                    → általános rendszernapló 
+ 
+  /var/log/messages                  → (RedHat/CentOS) rendszernapló 
+ 
+  /var/log/auth.log                  → bejelentkezések 
+ 
+  /var/log/apache2/error.log         → apache hibák 
+ 
+  /var/log/apache2/access.log        → apache hozzáférések 
+ 
+  /var/log/dpkg.log                  → csomagtelepítések 
+ 
+ 
+ 
+  tail -f /var/log/syslog            → élő log követés 
+ 
+  tail -n 50 /var/log/syslog         → utolsó 50 sor 
+ 
+  less /var/log/syslog               → lapozható nézetben (q = kilépés) 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+GYORS TIPPEK VIZSGÁRA 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+WINDOWS: 
+ 
+  - GUI feladatnál: Server Manager → Tools → megfelelő konzol 
+ 
+  - GPO szerkesztéshez mindig: Group Policy Management (GPMC) 
+ 
+  - Felhasználó a tartományban: ADUC (Active Directory Users and Computers) 
+ 
+  - gpupdate /force → azonnal lépteti érvénybe a GPO-t 
+ 
+  - Szolgáltatás tiltáshoz: services.msc → Startup type: Disabled + Stop 
+ 
+  - MMC snap-in mentése: File → Save As → .msc kiterjesztéssel 
+ 
+ 
+ 
+LINUX: 
+ 
+  - sudo apt update → MINDIG első lépés telepítés előtt! 
+ 
+  - systemctl status → ha nem indul el valami, ez megmutatja a hibát 
+ 
+  - a2ensite / a2dissite → Apache oldal be/ki kapcsolása 
+ 
+  - chmod 600 a swap fájlhoz → kötelező, különben mkswap hibát dob 
+ 
+  - Szkript első sora: #!/bin/bash → ne felejtsd el! 
+ 
+  - ln -s → szimbolikus link (sorrend: eredeti → link) 
+ 
+  - > felülír, >> hozzáfűz → ne keverje össze! 
+ 
+  - getfacl → ACL ellenőrzés telepítés után 
+ 
+  - pipe ( | ) → bal output → jobb input 
+ 
+  - Fájlba mentés: parancs > /tmp/fajl.txt 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+╔══════════════════════════════════════════════════════════════════╗ 
+ 
+║           AWS FELHŐSZOLGÁLTATÁS -	   	                   ║ 
+ 
+╚══════════════════════════════════════════════════════════════════╝ 
+ 
+ 
+ 
+BELÉPÉS: 
+ 
+  → Böngésző → AWS Management Console → kapott kredenciálokkal belép 
+ 
+  → Régió: mindig ellenőrizd a jobb felső sarokban! (pl. eu-west-1) 
+ 
+  → Keresősávba írj rá a szolgáltatásra (VPC, EC2, stb.) 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+1. VPC LÉTREHOZÁSA 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+Keresősávba: VPC → Your VPCs → Create VPC 
+ 
+ 
+ 
+  Beállítások: 
+ 
+  → Resources to create: VPC only 
+ 
+  → Name tag: VizsgaVPC  (vagy VallalatiVPC - ami a feladatban van) 
+ 
+  → IPv4 CIDR block: 10.100.0.0/16  (vagy 10.0.0.0/16 / 172.16.0.0/16) 
+ 
+  → IPv6: No IPv6 CIDR block 
+ 
+  → Tenancy: Default 
+ 
+  → Create VPC 
+ 
+ 
+ 
+  ! Gyakori CIDR értékek a feladatokban: 
+ 
+    10.0.0.0/16 
+ 
+    10.100.0.0/16 
+ 
+    172.16.0.0/16 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+2. ALHÁLÓZAT (SUBNET) LÉTREHOZÁSA 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+VPC → Subnets → Create subnet 
+ 
+ 
+ 
+  Beállítások: 
+ 
+  → VPC ID: válaszd ki a létrehozott VPC-t (pl. VizsgaVPC) 
+ 
+  → Subnet name: WebSubnet  (vagy Subnet-1 stb.) 
+ 
+  → Availability Zone: válassz egyet (pl. eu-west-1a) 
+ 
+  → IPv4 CIDR block: 10.100.1.0/24  (a VPC-n belüli kisebb tartomány!) 
+ 
+ 
+ 
+  ! Ha KÉT alhálózatot kell: 
+ 
+    Subnet 1: 172.16.1.0/24 
+ 
+    Subnet 2: 172.16.2.0/24 
+ 
+    → "Add new subnet" gombbal a másodikát is hozzáadod egyszerre 
+ 
+ 
+ 
+  → Create subnet 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+3. INTERNET GATEWAY LÉTREHOZÁSA ÉS CSATOLÁSA 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+VPC → Internet Gateways → Create internet gateway 
+ 
+ 
+ 
+  → Name tag: VizsgaIGW  (bármilyen név) 
+ 
+  → Create internet gateway 
+ 
+ 
+ 
+  CSATOLÁS A VPC-HEZ: 
+ 
+  → Létrehozás után azonnal felugrik: "Attach to a VPC" 
+ 
+    (vagy: Actions → Attach to VPC) 
+ 
+  → Válaszd ki a VizsgaVPC-t 
+ 
+  → Attach internet gateway 
+ 
+ 
+ 
+  ! State: "attached" legyen, ne "detached" 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+4. ROUTE TABLE (ÚTVÁLASZTÓ TÁBLA) BEÁLLÍTÁSA 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+Asd3 
+ 
+1. FELADAT: AWS VPC + KÉT SUBNET + IGW + ROUTE TABLE 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+Feladat: VPC neve: VállalatiVPC, CIDR: 172.16.0.0/16 
+ 
+         Subnet 1: 172.16.1.0/24 
+ 
+         Subnet 2: 172.16.2.0/24 
+ 
+         Internet Gateway + Route Table konfigurálás 
+ 
+ 
+ 
+LÉPÉSEK SORBAN: 
+ 
+ 
+ 
+  1. VPC LÉTREHOZÁSA: 
+ 
+     AWS Console → VPC → Your VPCs → Create VPC 
+ 
+     → Resources to create: VPC only 
+ 
+     → Name tag: VállalatiVPC 
+ 
+     → IPv4 CIDR: 172.16.0.0/16 
+ 
+     → Create VPC 
+ 
+ 
+ 
+  2. SUBNET 1 LÉTREHOZÁSA: 
+ 
+     VPC → Subnets → Create subnet 
+ 
+     → VPC ID: VállalatiVPC 
+ 
+     → Subnet name: Subnet-1 
+ 
+     → Availability Zone: válassz egyet (pl. eu-west-1a) 
+ 
+     → IPv4 CIDR: 172.16.1.0/24 
+ 
+     → "Add new subnet" gomb 
+ 
+ 
+ 
+  3. SUBNET 2 HOZZÁADÁSA (egyszerre): 
+ 
+     → Subnet name: Subnet-2 
+ 
+     → Availability Zone: (lehet ugyanaz) 
+ 
+     → IPv4 CIDR: 172.16.2.0/24 
+ 
+     → Create subnet 
+ 
+ 
+ 
+  4. INTERNET GATEWAY LÉTREHOZÁSA: 
+ 
+     VPC → Internet Gateways → Create internet gateway 
+ 
+     → Name tag: VállalatiIGW 
+ 
+     → Create internet gateway 
+ 
+     → Azonnal: Actions → Attach to VPC → VállalatiVPC → Attach 
+ 
+ 
+ 
+  5. ROUTE TABLE BEÁLLÍTÁSA: 
+ 
+     VPC → Route Tables 
+ 
+     → Keresd meg a VállalatiVPC-hez tartozó route table-t 
+ 
+     → Routes fül → Edit routes → Add route 
+ 
+       Destination: 0.0.0.0/0 
+ 
+       Target: Internet Gateway → VállalatiIGW 
+ 
+     → Save changes 
+ 
+ 
+ 
+     → Subnet associations fül → Edit subnet associations 
+ 
+     → Pipáld be Subnet-1-et (ahol az EC2 lesz) 
+ 
+     → Save associations 
+ 
+ 
+ 
+ELLENŐRZÉS: 
+ 
+  VPC → Your VPCs → VállalatiVPC legyen listában 
+ 
+  VPC → Subnets → 172.16.1.0/24 és 172.16.2.0/24 látható 
+ 
+  VPC → Internet Gateways → State: attached 
+ 
+  Route Table → Routes: 0.0.0.0/0 → igw-xxxxxxxx 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+2. FELADAT: EC2 PÉLDÁNY INDÍTÁSA 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+Feladat: Amazon Linux vagy Ubuntu, t2.micro, 
+ 
+         első alhálózatban (172.16.1.0/24), 
+ 
+         Security Group: HTTP 80 + SSH 22 bárhonnan 
+ 
+ 
+ 
+LÉPÉSEK: 
+ 
+ 
+ 
+  EC2 → Instances → Launch instances 
+ 
+ 
+ 
+  1. Name: VizsgaServer 
+ 
+  2. AMI: Amazon Linux 2023  (vagy Ubuntu Server 22.04 LTS) 
+ 
+     → Free tier eligible legyen! 
+ 
+  3. Instance type: t2.micro  ← fontos! 
+ 
+  4. Key pair: 
+ 
+     → Create new key pair 
+ 
+     → Name: vizsga-key 
+ 
+     → Type: RSA, Format: .pem 
+ 
+     → Letöltés automatikus (ne veszítsd el!) 
+ 
+  5. Network settings → Edit: 
+ 
+     → VPC: VállalatiVPC 
+ 
+     → Subnet: Subnet-1 (172.16.1.0/24) 
+ 
+     → Auto-assign public IP: ENABLE  ← KÖTELEZŐ! 
+ 
+     → Security group: Create security group 
+ 
+       → Name: WebSG 
+ 
+       → Inbound rules: 
+ 
+         Type: SSH    Port: 22   Source: 0.0.0.0/0 
+ 
+         Type: HTTP   Port: 80   Source: 0.0.0.0/0 
+ 
+         (Add security group rule gombbal add hozzá a másodikat) 
+ 
+  6. Storage: alapértelmezett (8 GiB) jó 
+ 
+  7. Launch instance 
+ 
+ 
+ 
+ELLENŐRZÉS: 
+ 
+  EC2 → Instances → Instance state: "running" (lehet 1-2 perc amíg elindul) 
+ 
+  Public IPv4 address: megjelenik (pl. 54.xxx.xxx.xxx) 
+ 
+  Security group → Inbound rules: SSH 22 és HTTP 80 látható 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+3. FELADAT: MICROSOFT FORMS KÉRDŐÍV 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+Feladat: 3 feleletválasztós kérdés IP-címzés témából, 
+ 
+         publikus megosztási link → urlap_link.txt az Asztalra 
+ 
+ 
+ 
+LÉPÉSEK: 
+ 
+ 
+ 
+  1. Böngésző → forms.office.com  (iskolai Microsoft fiókkal) 
+ 
+  2. + New Form 
+ 
+  3. Cím: "IP Címzés Szakmai Teszt"  (bármilyen releváns cím) 
+ 
+ 
+ 
+  3 KÉRDÉS LÉTREHOZÁSA: 
+ 
+  → + Add new question → Choice (Választós) minden esetben 
+ 
+ 
+ 
+  KÉRDÉS 1: 
+ 
+  "Melyik a 192.168.1.0/24 hálózat alhálózati maszkja?" 
+ 
+  A) 255.255.0.0 
+ 
+  B) 255.255.255.0   ← helyes (pipáld be!) 
+ 
+  C) 255.0.0.0 
+ 
+  D) 255.255.255.128 
+ 
+ 
+ 
+  KÉRDÉS 2: 
+ 
+  "Melyik IP-cím tartomány tartozik a privát (RFC 1918) címek közé?" 
+ 
+  A) 172.16.0.0/12   ← helyes 
+ 
+  B) 8.8.8.8/32 
+ 
+  C) 192.0.2.0/24 
+ 
+  D) 100.64.0.0/10 
+ 
+ 
+ 
+  KÉRDÉS 3: 
+ 
+  "Hány hoszt cím fér el egy /28-as alhálózatban?" 
+ 
+  A) 30 
+ 
+  B) 62 
+ 
+  C) 14   ← helyes  (2^4 - 2 = 14) 
+ 
+  D) 6 
+ 
+ 
+ 
+  MEGOSZTÁS: 
+ 
+  4. Jobb felső: Share gomb 
+ 
+  5. "Copy link" → ez a kitöltési link 
+ 
+  6. Notepad megnyitása → link beillesztése 
+ 
+  7. Mentés: Asztal → urlap_link.txt 
+ 
+ 
+ 
+ELLENŐRZÉS: 
+ 
+  Az urlap_link.txt fájl az Asztalon van 
+ 
+  A link böngészőbe beillesztve megnyitja az űrlapot 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+VPC → Route Tables 
+ 
+ 
+ 
+  OPCIÓ A: Meglévő route table szerkesztése (amit a VPC-vel együtt jött létre) 
+ 
+  → Kattints a VPC-hez tartozó Route Table-ra 
+ 
+  → Routes fül → Edit routes → Add route 
+ 
+    → Destination: 0.0.0.0/0 
+ 
+    → Target: Internet Gateway → válaszd ki a létrehozott IGW-t 
+ 
+  → Save changes 
+ 
+ 
+ 
+  ALHÁLÓZAT HOZZÁRENDELÉSE A ROUTE TABLE-HEZ: 
+ 
+  → Route Table → Subnet associations fül 
+ 
+  → Edit subnet associations 
+ 
+  → Pipáld be a WebSubnet-et 
+ 
+  → Save associations 
+ 
+ 
+ 
+  ! A 0.0.0.0/0 → IGW szabály teszi "publikusá" az alhálózatot (internet elérés) 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+5. SECURITY GROUP (BIZTONSÁGI CSOPORT) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+VPC → Security Groups → Create security group 
+ 
+  (vagy EC2 → Security Groups) 
+ 
+ 
+ 
+  Beállítások: 
+ 
+  → Security group name: WebSG  (vagy db_szerver stb.) 
+ 
+  → Description: leírás 
+ 
+  → VPC: válaszd ki a VizsgaVPC-t 
+ 
+ 
+ 
+  INBOUND RULES (BEJÖVŐ SZABÁLYOK): 
+ 
+  → Add rule gombbal: 
+ 
+ 
+ 
+  WEB SZERVER (HTTP + SSH bárhonnan): 
+ 
+  Type: SSH        Protocol: TCP   Port: 22    Source: 0.0.0.0/0 
+ 
+  Type: HTTP       Protocol: TCP   Port: 80    Source: 0.0.0.0/0 
+ 
+  Type: HTTPS      Protocol: TCP   Port: 443   Source: 0.0.0.0/0 
+ 
+ 
+ 
+  DB SZERVER (MySQL csak a web szerver privát IP-jéről): 
+ 
+  Type: MySQL/Aurora  Protocol: TCP   Port: 3306 
+ 
+  Source: Custom → <web szerver privát IP-je>/32 
+ 
+  (pl. 10.100.1.25/32) 
+ 
+ 
+ 
+  ! Source: 0.0.0.0/0 = bárhonnan 
+ 
+  ! Source: Custom IP/32 = csak egyetlen IP-ről 
+ 
+  ! /32 = egyetlen hoszt (ne feledd a /32-t!) 
+ 
+ 
+ 
+  → Create security group 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+6. EC2 PÉLDÁNY INDÍTÁSA 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+EC2 → Instances → Launch instances 
+ 
+ 
+ 
+  LÉPÉSEK SORBAN: 
+ 
+ 
+ 
+  1. NAME AND TAGS: 
+ 
+     → Name: WebSzerver  (vagy bármilyen név) 
+ 
+ 
+ 
+  2. APPLICATION AND OS IMAGE (AMI): 
+ 
+     → Amazon Linux 2023  (vagy Ubuntu Server 22.04 LTS) 
+ 
+     → Mindkettő Free tier eligible 
+ 
+ 
+ 
+  3. INSTANCE TYPE: 
+ 
+     → t2.micro  (Free tier, ezt kell a vizsgán!) 
+ 
+ 
+ 
+  4. KEY PAIR: 
+ 
+     → Create new key pair (ha nincs még) 
+ 
+       → Key pair name: vizsga-key 
+ 
+       → Key pair type: RSA 
+ 
+       → Private key format: .pem (Linux) vagy .ppk (PuTTY/Windows) 
+ 
+       → Create key pair → LETÖLTŐDIK → ne veszítsd el! 
+ 
+     → Vagy: Proceed without a key pair (ha nem kell SSH) 
+ 
+ 
+ 
+  5. NETWORK SETTINGS: 
+ 
+     → Edit gomb megnyomása! 
+ 
+     → VPC: VizsgaVPC 
+ 
+     → Subnet: WebSubnet 
+ 
+     → Auto-assign public IP: ENABLE  ← nagyon fontos! 
+ 
+     → Security group: meglévő kiválasztása vagy új létrehozása 
+ 
+       → Select existing: WebSG 
+ 
+       (vagy itt is létrehozhatod a szabályokat) 
+ 
+ 
+ 
+  6. CONFIGURE STORAGE: 
+ 
+     → 8 GiB gp2/gp3 → általában alapértelmezett jó 
+ 
+ 
+ 
+  7. → Launch instance 
+ 
+ 
+ 
+  ELLENŐRZÉS: 
+ 
+  → Instances listában: Instance state = "running" 
+ 
+  → Public IPv4 address megjelenik (ez kell a kapcsolódáshoz) 
+ 
+  → Private IPv4 address is látható (ezt add meg a DB Security Group-ban!) 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+7. PUBLIKUS IP MEGKERESÉSE / MENTÉSE 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+EC2 → Instances → kattints a példányra → lent "Details" fül 
+ 
+ 
+ 
+  Public IPv4 address:  pl. 54.123.45.67 
+ 
+  Private IPv4 address: pl. 10.100.1.25 
+ 
+ 
+ 
+  ! Ha a feladat szöveges dokumentumba kéri: 
+ 
+    → Nyiss Notepadot / gedit-et 
+ 
+    → Másold bele: "EC2 publikus IP: 54.123.45.67" 
+ 
+    → Mentés: szerver_adatok.txt névre az Asztalra 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+8. FÁJL MEGOSZTÁSA FELHŐBEN (OneDrive / Google Drive) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+ONEDRIVE: 
+ 
+  → Böngészőben: onedrive.live.com (vagy Microsoft365 → OneDrive) 
+ 
+  → Upload → Files → szerver_adatok.txt feltöltése 
+ 
+  → Fájlra jobb klikk → Share (Megosztás) 
+ 
+  → "Anyone with the link can view" (bárki megtekintheti a linkkel) 
+ 
+    → OLVASÓ jog (ne adj szerkesztési jogot!) 
+ 
+  → Copy link 
+ 
+  → Notepadba/txt fájlba mentés: link.txt 
+ 
+ 
+ 
+GOOGLE DRIVE: 
+ 
+  → drive.google.com 
+ 
+  → Új → Fájl feltöltése → szerver_adatok.txt 
+ 
+  → Fájlra jobb klikk → Megosztás 
+ 
+  → "Bárki, akinek van a link" → Megtekintő (Viewer) 
+ 
+  → Link másolása 
+ 
+  → link.txt fájlba mentés az Asztalra 
+ 
+ 
+ 
+  ! Fontos: "Olvasás csak" / "Viewer" / "Can view" legyen, ne "Editor"! 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+9. OUTLOOK NAPTÁR - ESEMÉNY LÉTREHOZÁSA 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+  → Böngészőben: outlook.office.com  (kapott fiókkal belép) 
+ 
+  → Bal oldali menüben: Naptár ikon 
+ 
+  → "Új esemény" gomb (vagy kattints a mai napra) 
+ 
+ 
+ 
+  Beállítások: 
+ 
+  → Cím: AWS Karbantartás 
+ 
+  → Dátum: mai nap 
+ 
+  → Időpont: bármilyen 
+ 
+  → Vendégek meghívása (Invite attendees): 
+ 
+    → tanar@dszcberegszaszi.hu  (vagy a megadott email cím) 
+ 
+  → Mentés / Küldés 
+ 
+ 
+ 
+  ! Ha "Vendégként" kell meghívni: az "Attendees" / "Meghívottak" mezőbe írd be! 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+10. MICROSOFT FORMS - KÉRDŐÍV KÉSZÍTÉSE 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+  → Böngészőben: forms.office.com  (kapott Microsoft fiókkal) 
+ 
+  → Új Form (Új űrlap) 
+ 
+  → Cím megadása (pl. "IP Címzés Teszt") 
+ 
+ 
+ 
+  KÉRDÉS HOZZÁADÁSA: 
+ 
+  → + Add new question → Choice (Választós / Feleletválasztós) 
+ 
+  → Kérdés szövege: pl. "Melyik a 10.0.0.1/24 hálózat alhálózati maszkja?" 
+ 
+  → Lehetőségek megadása: 
+ 
+    Option 1: 255.255.255.0   ← helyes 
+ 
+    Option 2: 255.255.0.0 
+ 
+    Option 3: 255.0.0.0 
+ 
+  → Mark as correct answer (pipáld be a helyeset) 
+ 
+  → Ismételd 3-szor (3 kérdés kell) 
+ 
+ 
+ 
+  MEGOSZTÁS: 
+ 
+  → Share gomb (jobb felső sarok) 
+ 
+  → "Copy link" → ez a publikus kitöltési link 
+ 
+  → Notepadba mentés: urlap_link.txt  → Asztalra 
+ 
+ 
+ 
+  ! 3 szakmai feleletválasztós kérdés az IP-címzés témakörből, pl.: 
+ 
+    - "Mi a /24-es prefix hosszú alhálózat maszkja?" 
+ 
+    - "Melyik IP cím tartomány privát?" 
+ 
+    - "Mi az alapértelmezett gateway szerepe?" 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+TELJES FELADAT MUNKAFOLYAMAT (SORREND!) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+  1. VPC létrehozása (CIDR: pl. 10.0.0.0/16) 
+ 
+  2. Subnet létrehozása a VPC-n belül (pl. 10.0.1.0/24) 
+ 
+  3. Internet Gateway létrehozása + csatolás a VPC-hez 
+ 
+  4. Route Table: 0.0.0.0/0 → IGW szabály hozzáadása 
+ 
+  5. Route Table: Subnet hozzárendelése 
+ 
+  6. Security Group létrehozása (SSH 22, HTTP 80 engedélyezése) 
+ 
+  7. EC2 példány indítása: 
+ 
+     → AMI: Amazon Linux / Ubuntu 
+ 
+     → Type: t2.micro 
+ 
+     → Network: saját VPC + Subnet 
+ 
+     → Public IP: Enable! 
+ 
+     → Security Group: a létrehozott SG 
+ 
+  8. EC2 indulás után: Publikus IP kimásolása 
+ 
+  9. szerver_adatok.txt létrehozása az IP-vel → Asztalra mentés 
+ 
+  10. Feltöltés OneDrive/Google Drive-ra → link másolása 
+ 
+  11. Megosztás: "Csak olvasás" jogosultsággal 
+ 
+  12. Link mentése: link.txt → Asztalra 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+KÉT EC2 PÉLDÁNY (WEB + DB SZERVER) 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+  LÉPÉSEK: 
+ 
+ 
+ 
+  1. Web szerver Security Group (WebSG): 
+ 
+     Inbound: SSH 22 → 0.0.0.0/0 
+ 
+              HTTP 80 → 0.0.0.0/0 
+ 
+ 
+ 
+  2. Web szerver EC2 indítása WebSG-vel 
+ 
+     → Indítás után: jegyezd meg a PRIVÁT IP-jét! (pl. 10.100.1.15) 
+ 
+ 
+ 
+  3. DB szerver Security Group (DBSG): 
+ 
+     Inbound: MySQL/Aurora 3306 → Custom: 10.100.1.15/32 
+ 
+             (csak a web szerver privát IP-jéről!) 
+ 
+ 
+ 
+  4. DB szerver EC2 indítása DBSG-vel 
+ 
+     → Ugyanabban az alhálózatban 
+ 
+ 
+ 
+  ! A /32 wildcard nélkül: pontosan egy IP-t jelent 
+ 
+  ! Private IP-t a web szerveren: EC2 → Instances → Details → Private IPv4 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+HASZNOS AWS NAVIGÁCIÓ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+  VPC Dashboard:       VPC → Your VPCs 
+ 
+  Subnetek:            VPC → Subnets 
+ 
+  Internet Gateway:    VPC → Internet Gateways 
+ 
+  Route Tables:        VPC → Route Tables 
+ 
+  Security Groups:     VPC → Security Groups  (vagy EC2 → Security Groups) 
+ 
+  EC2 példányok:       EC2 → Instances → Instances 
+ 
+  Elastic IPs:         EC2 → Network & Security → Elastic IPs 
+ 
+ 
+ 
+  ! Ha valami nem találod: keresősávba írd be (pl. "VPC", "EC2", "IAM") 
+ 
+  ! Régió: jobb felső sarok → mindig ugyanaz legyen az egész feladat alatt! 
+ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+GYAKORI HIBÁK ÉS MEGOLDÁSUK 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+  ✗ EC2-nek nincs publikus IP 
+ 
+    → Launch instance → Network Settings → Auto-assign public IP: Enable! 
+ 
+    → Vagy utólag: Elastic IP lefoglalása + hozzárendelés 
+ 
+ 
+ 
+  ✗ Nem érhető el a webszerver (HTTP 80) 
+ 
+    → Security Group → Inbound rules → HTTP 80 engedélyezve van-e? 
+ 
+    → Source: 0.0.0.0/0 legyen! 
+ 
+ 
+ 
+  ✗ Subnet nem kap internet elérést 
+ 
+    → Route Table-ben van-e 0.0.0.0/0 → IGW szabály? 
+ 
+    → A subnet hozzá van-e rendelve a Route Table-hez? 
+ 
+ 
+ 
+  ✗ IGW "detached" állapotban 
+ 
+    → Internet Gateways → Actions → Attach to VPC 
+ 
+ 
+ 
+  ✗ DB szerver nem érhető el MySQL-en 
+ 
+    → Security Group: 3306-os port nyitva? 
+ 
+    → Source: pontosan a web szerver PRIVÁT IP-je /32-vel? 
+ 
+ 
+ 
+  ✗ Wrong CIDR - subnet nem fér bele a VPC-be 
+ 
+    → VPC: 10.0.0.0/16 → Subnet max: 10.0.x.x/24 (belül kell legyen!) 
+ 
+    → pl. 10.100.0.0/16-os VPC-be: 10.100.1.0/24 subnet fér 
+ 
+ 
+ 
+ 
+ 
+Asd4 
+ 
+ÖSSZEFOGLALÓ ELLENŐRZŐLISTA 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+ 
+ 
+HÁLÓZAT (minden Cisco IOS-ban, TeraTerm): 
+ 
+  [ ] S1: spanning-tree mode rapid-pvst 
+ 
+  [ ] S1: spanning-tree vlan 1 priority 0 
+ 
+  [ ] show spanning-tree vlan 1 → "This bridge is the root" látható 
+ 
+  [ ] R1 + R2: router ospf 1, network ... area 0 
+ 
+  [ ] show ip ospf neighbor → FULL állapot 
+ 
+  [ ] S1: vlan 50 name Konyveles + fa0/1 access vlan 50 
+ 
+  [ ] show vlan brief → VLAN 50 megjelenik Fa0/1-gyel 
+ 
+  [ ] R1: access-list 10 permit 192.168.50.10 
+ 
+  [ ] R1: line vty 0 4 → access-class 10 in 
+ 
+  [ ] R1: enable secret vizsga01 
+ 
+  [ ] Minden eszközön: write memory! 
+ 
+ 
+ 
+SZERVEREK: 
+ 
+  [ ] Windows: DHCP szerepkör telepítve 
+ 
+  [ ] Windows: "Kliensek" scope, 10.10.10.100-200, aktív 
+ 
+  [ ] Windows: KepernyoZar GPO, tartomány gyökérhez linkelve 
+ 
+  [ ] Windows: 300 mp timeout + jelszóvédelem beállítva 
+ 
+  [ ] Windows: Felugyelet.msc az Asztalon, Services + Event Viewer 
+ 
+  [ ] Linux: sudo apt install bind9 + active (running) 
+ 
+  [ ] Linux: tail -n 50 /var/log/syslog | grep "error" > /tmp/hibak.log 
+ 
+  [ ] Linux: ln -s /etc/netplan/... /home/vizsgazo/halozat_konfig_link 
+ 
+ 
+ 
+FELHŐ: 
+ 
+  [ ] AWS: VállalatiVPC (172.16.0.0/16) létrehozva 
+ 
+  [ ] AWS: Subnet-1 (172.16.1.0/24) + Subnet-2 (172.16.2.0/24) 
+ 
+  [ ] AWS: Internet Gateway létrehozva + VPC-hez csatolva 
+ 
+  [ ] AWS: Route Table: 0.0.0.0/0 → IGW + Subnet-1 hozzárendelve 
+ 
+  [ ] AWS: EC2 (t2.micro) fut a Subnet-1-ben 
+ 
+  [ ] AWS: Public IP hozzárendelve az EC2-höz 
+ 
+  [ ] AWS: Security Group: SSH 22 + HTTP 80 nyitva bárhonnan 
+ 
+  [ ] Forms: 3 feleletválasztós kérdés IP témából 
+ 
+  [ ] Forms: urlap_link.txt az Asztalon 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+GYORS REFERENCIA - PORTOK 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+  22   → SSH (Linux szerver elérés) 
+ 
+  80   → HTTP (web) 
+ 
+  443  → HTTPS (titkosított web) 
+ 
+  3306 → MySQL / MariaDB 
+ 
+  5432 → PostgreSQL 
+ 
+  3389 → RDP (Windows Remote Desktop) 
+ 
+  53   → DNS 
+ 
+  25   → SMTP (email küldés) 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+CIDR GYORSSEGÍTSÉG 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+  /16 → 65 536 IP cím  → VPC-hez (nagy tartomány) 
+ 
+  /24 → 256 IP cím     → Subnethez (közepes tartomány) 
+ 
+  /32 → 1 IP cím       → egyetlen hoszt (Security Group source-hoz) 
+ 
+  0.0.0.0/0            → minden IP (bárhonnan/bárhová) 
+ 
+ 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+ 
+            HAJRÁ, SIKERÜLNI FOG! 💪 
+ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
